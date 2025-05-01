@@ -1,0 +1,70 @@
+/* src/pages/Landing.module.css */
+.container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: #f8f9fa;
+  }
+  
+  .content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+    text-align: center;
+  }
+  
+  .title {
+    font-size: 32px;
+    font-weight: 400;
+    color: #202124;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .titleIcon {
+    color: #34a853;
+    font-size: 40px;
+  }
+  
+  .subtitle {
+    font-size: 16px;
+    color: #5f6368;
+    margin-bottom: 40px;
+    max-width: 580px;
+  }
+  
+  .startButton {
+    padding: 12px 24px;
+    background-color: #1a73e8;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, box-shadow 0.2s;
+  }
+  
+  .startButton:hover {
+    background-color: #1765cc;
+    box-shadow: 0 1px 2px 0 rgba(66,133,244,0.3), 0 1px 3px 1px rgba(66,133,244,0.15);
+  }
+  
+  .busCard {
+    display: flex;
+    justify-items: center;
+    flex-direction: column;
+    align-items: center;
+    background: white;
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+    margin-top: 32px;
+    max-width: 600px;
+    width: 100%;
+  }
