@@ -12,11 +12,33 @@ function AdminPanel() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    rarity: 'Common', // Изменено на значение, которое ожидает бэкенд
+    rarity: 1, // Изменено на числовое значение (1: common, 2: uncommon, 3: rare, 4: legendary)
     image: null
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Функция для преобразования числового значения в читаемый формат
+  const getRarityDisplay = (rarityValue) => {
+    switch(rarityValue) {
+      case 1: return 'Обычный';
+      case 2: return 'Необычный';
+      case 3: return 'Редкий';
+      case 4: return 'Легендарный';
+      default: return 'Неизвестно';
+    }
+  };
+
+  // Функция для получения класса CSS для редкости
+  const getRarityClass = (rarityValue) => {
+    switch(rarityValue) {
+      case 1: return 'common';
+      case 2: return 'uncommon';
+      case 3: return 'rare';
+      case 4: return 'legendary';
+      default: return 'common';
+    }
+  };
 
   useEffect(() => {
     if (!user || !user.is_staff) {
@@ -86,7 +108,7 @@ function AdminPanel() {
         setFormData({
           name: '',
           description: '',
-          rarity: 'Common', // Сброс на значение по умолчанию
+          rarity: 1,
           image: null
         });
         await fetchBuses();
@@ -94,26 +116,21 @@ function AdminPanel() {
     } catch (err) {
       console.error('Ошибка добавления автобуса:', err.response?.data || err.message);
       if (err.response) {
-        // Обработка ошибок валидации
-        if (err.response.data) {
-          let errorMessages = [];
-          
-          if (typeof err.response.data === 'object') {
-            for (const [key, value] of Object.entries(err.response.data)) {
-              if (Array.isArray(value)) {
-                errorMessages.push(...value);
-              } else {
-                errorMessages.push(value);
-              }
+        let errorMessages = [];
+        
+        if (typeof err.response.data === 'object') {
+          for (const [key, value] of Object.entries(err.response.data)) {
+            if (Array.isArray(value)) {
+              errorMessages.push(...value);
+            } else {
+              errorMessages.push(value);
             }
-          } else {
-            errorMessages.push(err.response.data);
           }
-          
-          setError(errorMessages.join(' '));
         } else {
-          setError('Ошибка при добавлении автобуса');
+          errorMessages.push(err.response.data);
         }
+        
+        setError(errorMessages.join(' '));
       } else {
         setError('Не удалось соединиться с сервером');
       }
@@ -140,24 +157,13 @@ function AdminPanel() {
     }
   };
 
-  // Функция для отображения человеко-читаемого названия редкости
-  const getRarityDisplayName = (rarity) => {
-    switch (rarity) {
-      case 'Common': return 'Обычный';
-      case 'Rare': return 'Редкий';
-      case 'Epic': return 'Эпический';
-      case 'Legendary': return 'Легендарный';
-      default: return rarity;
-    }
-  };
-
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Header />
       <main style={{ flex: 1, padding: '20px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
         <h2>Панель модератора</h2>
         
-        {loading && <p>Загрузка...</p>}
+        {loading && buses.length === 0 && <p>Загрузка...</p>}
         
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
           <div>
@@ -195,10 +201,10 @@ function AdminPanel() {
                   onChange={handleChange}
                   style={{ width: '100%', padding: '8px' }}
                 >
-                  <option value="Common">Обычный</option>
-                  <option value="Rare">Редкий</option>
-                  <option value="Epic">Эпический</option>
-                  <option value="Legendary">Легендарный</option>
+                  <option value={1}>Обычный</option>
+                  <option value={2}>Необычный</option>
+                  <option value={3}>Редкий</option>
+                  <option value={4}>Легендарный</option>
                 </select>
               </div>
               
@@ -255,13 +261,13 @@ function AdminPanel() {
                           padding: '2px 8px',
                           borderRadius: '4px',
                           backgroundColor: 
-                            bus.rarity === 'Common' ? '#a0a0a0' :
-                            bus.rarity === 'Rare' ? '#007bff' :
-                            bus.rarity === 'Epic' ? '#6f42c1' : '#fd7e14',
+                            bus.rarity === 1 ? '#a0a0a0' :
+                            bus.rarity === 2 ? '#28a745' :
+                            bus.rarity === 3 ? '#007bff' : '#fd7e14',
                           color: 'white',
                           fontSize: '0.8em'
                         }}>
-                          {getRarityDisplayName(bus.rarity)}
+                          {getRarityDisplay(bus.rarity)}
                         </span>
                       </div>
                       <button 

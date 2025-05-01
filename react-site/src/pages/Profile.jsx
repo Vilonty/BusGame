@@ -15,6 +15,12 @@ function Profile() {
   const [inventoryItems, setInventoryItems] = useState([]);
   const navigate = useNavigate();
 
+  // Состояния для сканирования билетов
+  const [scanModalOpen, setScanModalOpen] = useState(false);
+  const [ticketImage, setTicketImage] = useState(null);
+  const [scanResult, setScanResult] = useState(null);
+  const [isScanning, setIsScanning] = useState(false);
+
   const fetchInventory = useCallback(async () => {
     try {
       const inventoryResponse = await axios.get('http://localhost:8000/api/inventory/', {
@@ -97,8 +103,6 @@ function Profile() {
           },
         }
       );
-
-      // После обновления аватара просто перезагружаем страницу
       window.location.reload();
     } catch (err) {
       console.error('Ошибка загрузки аватара:', err);
@@ -109,7 +113,49 @@ function Profile() {
   };
 
   const handleScanTicket = () => {
-    navigate('/scan-ticket');
+    setScanModalOpen(true);
+    setScanResult(null);
+  };
+
+  const handleTicketImageChange = (e) => {
+    setTicketImage(e.target.files[0]);
+  };
+
+  const processTicketScan = async () => {
+    if (!ticketImage || !token) return;
+
+    setIsScanning(true);
+    setScanResult(null);
+
+    const formData = new FormData();
+    formData.append('ticket_image', ticketImage);
+
+    try {
+      const response = await axios.post(
+        'http://localhost:8000/api/tickets/scan/',
+        formData,
+        {
+          headers: {
+            'Authorization': `Token ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      setScanResult(response.data);
+      
+      if (response.data.bus_found) {
+        await fetchInventory();
+      }
+    } catch (err) {
+      console.error('Ошибка сканирования билета:', err);
+      setScanResult({
+        error: 'Ошибка сканирования билета',
+        details: err.response?.data?.message || 'Попробуйте еще раз'
+      });
+    } finally {
+      setIsScanning(false);
+    }
   };
 
   const getRarityClass = (rarity) => {
@@ -265,6 +311,123 @@ function Profile() {
           )}
         </div>
       </div>
+
+      {/* Модальное окно сканирования билета */}
+      {scanModalOpen && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.scanModal}>
+            <button 
+              className={styles.closeModal}
+              onClick={() => setScanModalOpen(false)}
+            >
+              &times;
+            </button>
+            
+            <h3>Сканирование билета</h3>
+            
+            {!ticketImage ? (
+              <div className={styles.uploadArea}>
+                <input 
+                  type="file" 
+                  id="ticket-upload"
+                  onChange={handleTicketImageChange}
+                  accept="image/*"
+                  className={styles.fileInput}
+                />
+                <label htmlFor="ticket-upload" className={styles.fileLabel}>
+                  Выбрать фото билета
+                </label>
+                <p className={styles.uploadHint}>
+                  Сфотографируйте или загрузите изображение билета с номером автобуса
+                </p>
+              </div>
+            ) : (
+              <div className={styles.scanProcess}>
+                <div className={styles.ticketPreview}>
+                  <img 
+                    src={URL.createObjectURL(ticketImage)} 
+                    alt="Билет" 
+                    className={styles.ticketImage}
+                  />
+                </div>
+                
+                {!isScanning && !scanResult && (
+                  <div className={styles.scanActions}>
+                    <button 
+                      onClick={() => setTicketImage(null)}
+                      className={styles.secondaryButton}
+                    >
+                      Выбрать другое фото
+                    </button>
+                    <button 
+                      onClick={processTicketScan}
+                      className={styles.primaryButton}
+                    >
+                      Сканировать
+                    </button>
+                  </div>
+                )}
+                
+                {isScanning && (
+                  <div className={styles.scanningStatus}>
+                    <div className={styles.spinner}></div>
+                    <p>Идет распознавание билета...</p>
+                  </div>
+                )}
+                
+                {scanResult && (
+                  <div className={`${styles.scanResult} ${
+                    scanResult.error ? styles.error : styles.success
+                  }`}>
+                    {scanResult.error ? (
+                      <>
+                        <h4>Ошибка</h4>
+                        <p>{scanResult.error}</p>
+                        {scanResult.details && <p>{scanResult.details}</p>}
+                      </>
+                    ) : (
+                      <>
+                        <h4>Результат сканирования</h4>
+                        <p>Номер автобуса: {scanResult.bus_number}</p>
+                        {scanResult.bus_found ? (
+                          <>
+                            <p className={styles.successText}>
+                              Поздравляем! Вы получили новый автобус!
+                            </p>
+                            <div className={styles.newBusCard}>
+                              <img 
+                                src={scanResult.bus_image} 
+                                alt={scanResult.bus_name}
+                                className={styles.newBusImage}
+                              />
+                              <h5>{scanResult.bus_name}</h5>
+                            </div>
+                          </>
+                        ) : (
+                          <p className={styles.warningText}>
+                            Такого автобуса пока нет в базе
+                          </p>
+                        )}
+                      </>
+                    )}
+                    
+                    <button 
+                      onClick={() => {
+                        setScanModalOpen(false);
+                        setTicketImage(null);
+                      }}
+                      className={styles.closeResultButton}
+                    >
+                      Закрыть
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <Footer />
     </div>
   );
